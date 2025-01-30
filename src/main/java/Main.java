@@ -1,57 +1,100 @@
+import java.io.*;
 import java.nio.file.*;
 import java.util.*;
 
 public class Main {
+    private static final Set<String> BUILTINS = Set.of("echo", "exit", "type");
+
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-
-        // Set of built-in commands
-        Set<String> builtins = Set.of("echo", "exit", "type");
 
         while (true) {
             System.out.print("$ ");
             String input = scanner.nextLine().trim();
+            if (input.isEmpty()) continue;
 
-            // Handle "exit 0" command
-            if (input.equals("exit 0")) {
-                scanner.close();
-                System.exit(0);
+            String[] tokens = input.split("\\s+");
+            String command = tokens[0];
+            String[] commandArgs = Arrays.copyOfRange(tokens, 1, tokens.length);
+
+            if (BUILTINS.contains(command)) {
+                handleBuiltin(command, commandArgs);
+            } else {
+                executeExternalCommand(command, commandArgs);
             }
+        }
+    }
 
-            // Handle "echo" command
-            if (input.startsWith("echo ")) {
-                System.out.println(input.substring(5));
-                continue;
-            }
-
-            // Handle "type" command
-            if (input.startsWith("type ")) {
-                String command = input.substring(5).trim();
-                if (builtins.contains(command)) {
-                    System.out.println(command + " is a shell builtin");
+    private static void handleBuiltin(String command, String[] args) {
+        switch (command) {
+            case "echo":
+                System.out.println(String.join(" ", args));
+                break;
+            case "exit":
+                if (args.length == 1 && args[0].equals("0")) {
+                    System.exit(0);
                 } else {
-                    String commandPath = findExecutableInPath(command);
-                    if (commandPath != null) {
-                        System.out.println(command + " is " + commandPath);
-                    } else {
-                        System.out.println(command + ": not found");
-                    }
+                    System.out.println("Usage: exit 0");
                 }
-                continue;
-            }
+                break;
+            case "type":
+                if (args.length == 1) {
+                    String cmd = args[0];
+                    if (BUILTINS.contains(cmd)) {
+                        System.out.println(cmd + " is a shell builtin");
+                    } else {
+                        String path = findExecutableInPath(cmd);
+                        if (path != null) {
+                            System.out.println(cmd + " is " + path);
+                        } else {
+                            System.out.println(cmd + ": not found");
+                        }
+                    }
+                } else {
+                    System.out.println("Usage: type <command>");
+                }
+                break;
+            default:
+                System.out.println(command + ": command not found");
+        }
+    }
 
-            // Default case: command not found
-            System.out.println(input + ": command not found");
+    private static void executeExternalCommand(String command, String[] args) {
+        String executablePath = findExecutableInPath(command);
+        if (executablePath == null) {
+            System.out.println(command + ": command not found");
+            return;
+        }
+
+        List<String> commandWithArgs = new ArrayList<>();
+        commandWithArgs.add(executablePath);
+        commandWithArgs.addAll(Arrays.asList(args));
+
+        ProcessBuilder processBuilder = new ProcessBuilder(commandWithArgs);
+        processBuilder.redirectErrorStream(true);
+
+        try {
+            Process process = processBuilder.start();
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    System.out.println(line);
+                }
+            }
+            int exitCode = process.waitFor();
+            if (exitCode != 0) {
+                System.out.println("Process exited with code " + exitCode);
+            }
+        } catch (IOException | InterruptedException e) {
+            System.out.println("Error executing command: " + e.getMessage());
         }
     }
 
     private static String findExecutableInPath(String command) {
         String pathEnv = System.getenv("PATH");
-        if (pathEnv == null) {
-            return null;
-        }
+        if (pathEnv == null) return null;
 
-        String[] paths = pathEnv.split(System.getProperty("path.separator"));
+        String[] paths = pathEnv.split(File.pathSeparator);
         for (String path : paths) {
             Path fullPath = Paths.get(path, command);
             if (Files.isExecutable(fullPath)) {
