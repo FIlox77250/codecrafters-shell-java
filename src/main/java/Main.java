@@ -3,7 +3,7 @@ import java.nio.file.*;
 import java.util.*;
 
 public class Main {
-    private static final Set<String> BUILTINS = Set.of("echo", "exit", "type");
+    private static final Set<String> BUILTINS = Set.of("echo", "exit", "type", "pwd");
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
@@ -52,6 +52,9 @@ public class Main {
                 } else {
                     System.out.println("Usage: type <command>");
                 }
+                break;
+            case "pwd":
+                System.out.println(System.getProperty("user.dir"));
                 break;
             default:
                 System.out.println(command + ": command not found");
