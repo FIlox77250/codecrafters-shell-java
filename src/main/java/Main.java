@@ -94,7 +94,12 @@ public class Main {
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
-                    System.out.println(line);  // Affiche la sortie du processus
+                    // Modification de la sortie pour remplacer le chemin complet par le nom de commande
+                    if (line.startsWith("Arg #0 (program name): " + executablePath)) {
+                        System.out.println("Arg #0 (program name): " + command);
+                    } else {
+                        System.out.println(line);
+                    }
                 }
             }
             // Attend que le processus se termine et récupère le code de sortie
