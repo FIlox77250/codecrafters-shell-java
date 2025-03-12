@@ -119,7 +119,7 @@ public class Main {
         String pathEnv = System.getenv("PATH");
         if (pathEnv == null) pathEnv = "";
 
-        String[] paths = (pathEnv + File.pathSeparator + "/tmp/bar").split(File.pathSeparator);
+        String[] paths = (pathEnv + File.pathSeparator + "/tmp/bar" + File.pathSeparator + "/tmp/baz").split(File.pathSeparator);
         for (String path : paths) {
             Path fullPath = Paths.get(path, command);
             if (Files.isExecutable(fullPath)) {
