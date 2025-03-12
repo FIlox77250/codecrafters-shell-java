@@ -100,7 +100,6 @@ public class Main {
         String[] paths = (pathEnv + File.pathSeparator + "/tmp/bar").split(File.pathSeparator);
         for (String path : paths) {
             Path fullPath = Paths.get(path, command);
-            System.out.println("Checking: " + fullPath); // Debug output
             if (Files.isExecutable(fullPath)) {
                 return fullPath.toString();
             }
