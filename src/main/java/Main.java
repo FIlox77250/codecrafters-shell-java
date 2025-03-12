@@ -58,14 +58,17 @@ public class Main {
                 break;
             case "cd":
                 if (args.length == 1) {
-                    File newDir = new File(args[0]);
-                    if (newDir.isAbsolute() && newDir.isDirectory()) {
-                        System.setProperty("user.dir", newDir.getAbsolutePath());
+                    Path newPath = Paths.get(args[0]);
+                    if (!newPath.isAbsolute()) {
+                        newPath = Paths.get(System.getProperty("user.dir")).resolve(newPath).normalize();
+                    }
+                    if (Files.isDirectory(newPath)) {
+                        System.setProperty("user.dir", newPath.toAbsolutePath().toString());
                     } else {
                         System.out.println("cd: " + args[0] + ": No such file or directory");
                     }
                 } else {
-                    System.out.println("Usage: cd <absolute-path>");
+                    System.out.println("Usage: cd <path>");
                 }
                 break;
             default:
