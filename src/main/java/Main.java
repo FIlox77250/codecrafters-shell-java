@@ -3,7 +3,7 @@ import java.nio.file.*;
 import java.util.*;
 
 public class Main {
-    private static final Set<String> BUILTINS = Set.of("echo", "exit", "type", "pwd");
+    private static final Set<String> BUILTINS = Set.of("echo", "exit", "type", "pwd", "cd");
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
@@ -55,6 +55,18 @@ public class Main {
                 break;
             case "pwd":
                 System.out.println(System.getProperty("user.dir"));
+                break;
+            case "cd":
+                if (args.length == 1) {
+                    File newDir = new File(args[0]);
+                    if (newDir.isAbsolute() && newDir.isDirectory()) {
+                        System.setProperty("user.dir", newDir.getAbsolutePath());
+                    } else {
+                        System.out.println("cd: " + args[0] + ": No such file or directory");
+                    }
+                } else {
+                    System.out.println("Usage: cd <absolute-path>");
+                }
                 break;
             default:
                 System.out.println(command + ": command not found");
