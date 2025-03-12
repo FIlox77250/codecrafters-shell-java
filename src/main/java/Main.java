@@ -58,7 +58,11 @@ public class Main {
                 break;
             case "cd":
                 if (args.length == 1) {
-                    Path newPath = Paths.get(args[0]);
+                    String pathStr = args[0];
+                    if (pathStr.equals("~")) {
+                        pathStr = System.getenv("HOME");
+                    }
+                    Path newPath = Paths.get(pathStr);
                     if (!newPath.isAbsolute()) {
                         newPath = Paths.get(System.getProperty("user.dir")).resolve(newPath).normalize();
                     }
