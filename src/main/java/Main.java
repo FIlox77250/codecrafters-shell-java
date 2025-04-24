@@ -6,22 +6,49 @@ public class Main {
     private static final Set<String> BUILTINS = Set.of("echo", "exit", "type", "pwd", "cd");
 
     public static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
-        while (true) {
-            System.out.print("$ ");
-            String input = scanner.nextLine().trim();
-            if (input.isEmpty()) continue;
+        try (Scanner scanner = new Scanner(System.in)) {
+            while (true) {
+                System.out.print("$ ");
+                String input = scanner.nextLine().trim();
+                if (input.isEmpty()) continue;
 
-            String[] tokens = input.split("\\s+");
-            String command = tokens[0];
-            String[] commandArgs = Arrays.copyOfRange(tokens, 1, tokens.length);
+                List<String> tokenList = tokenize(input);
+                if (tokenList.isEmpty()) continue;
 
-            if (BUILTINS.contains(command)) {
-                handleBuiltin(command, commandArgs);
-            } else {
-                executeExternalCommand(command, commandArgs);
+                String command = tokenList.get(0);
+                String[] commandArgs = tokenList.subList(1, tokenList.size()).toArray(new String[0]);
+
+                if (BUILTINS.contains(command)) {
+                    handleBuiltin(command, commandArgs);
+                } else {
+                    executeExternalCommand(command, commandArgs);
+                }
             }
         }
+    }
+
+    private static List<String> tokenize(String input) {
+        List<String> tokens = new ArrayList<>();
+        StringBuilder currentToken = new StringBuilder();
+        boolean inSingleQuotes = false;
+
+        for (int i = 0; i < input.length(); i++) {
+            char c = input.charAt(i);
+            if (c == '\'') {
+                inSingleQuotes = !inSingleQuotes;
+            } else if (Character.isWhitespace(c) && !inSingleQuotes) {
+                if (currentToken.length() > 0) {
+                    tokens.add(currentToken.toString());
+                    currentToken.setLength(0);
+                }
+            } else {
+                currentToken.append(c);
+            }
+        }
+        if (currentToken.length() > 0) {
+            tokens.add(currentToken.toString());
+        }
+        return tokens;
     }
 
     private static void handleBuiltin(String command, String[] args) {
@@ -60,7 +87,7 @@ public class Main {
                 if (args.length == 1) {
                     String pathStr = args[0];
                     if (pathStr.equals("~")) {
-                        pathStr = System.getenv("HOME");
+                        pathStr = System.getProperty("user.home");
                     }
                     Path newPath = Paths.get(pathStr);
                     if (!newPath.isAbsolute()) {
@@ -99,11 +126,7 @@ public class Main {
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
-                    if (line.startsWith("Arg #0 (program name): " + executablePath)) {
-                        System.out.println("Arg #0 (program name): " + command);
-                    } else {
-                        System.out.println(line);
-                    }
+                    System.out.println(line);
                 }
             }
             int exitCode = process.waitFor();
